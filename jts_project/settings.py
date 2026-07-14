@@ -40,6 +40,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",          # Must be first
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -68,16 +69,25 @@ TEMPLATES = [{
 WSGI_APPLICATION = "jts_project.wsgi.application"
 
 # ─── Database (PostgreSQL) ──────────────────────────────────────────────────
-DATABASES = {
-    "default": {
-        "ENGINE":   "django.db.backends.postgresql",
-        "NAME":     config("DB_NAME",     default="jts_db"),
-        "USER":     config("DB_USER",     default="postgres"),
-        "PASSWORD": config("DB_PASSWORD", default=""),
-        "HOST":     config("DB_HOST",     default="localhost"),
-        "PORT":     config("DB_PORT",     default="5432"),
+import dj_database_url
+
+DATABASE_URL = config("DATABASE_URL", default="")
+
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=True)
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE":   "django.db.backends.postgresql",
+            "NAME":     config("DB_NAME",     default="jts_db"),
+            "USER":     config("DB_USER",     default="postgres"),
+            "PASSWORD": config("DB_PASSWORD", default=""),
+            "HOST":     config("DB_HOST",     default="localhost"),
+            "PORT":     config("DB_PORT",     default="5432"),
+        }
+    }
 
 # ─── Auth ───────────────────────────────────────────────────────────────────
 AUTH_USER_MODEL = "accounts.User"
@@ -144,6 +154,12 @@ FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:3000")
 
 # ─── Static files ─────────────────────────────────────────────────────────────
 STATIC_URL         = "/static/"
+STATIC_ROOT        = BASE_DIR / "staticfiles"
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LANGUAGE_CODE = "en-us"
