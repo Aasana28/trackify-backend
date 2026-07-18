@@ -30,6 +30,8 @@ class Application(models.Model):
     notes        = models.TextField(blank=True)
     link         = models.URLField(blank=True)
 
+    stale_alert_sent = models.BooleanField(default=False)
+
     created_at   = models.DateTimeField(auto_now_add=True)
     updated_at   = models.DateTimeField(auto_now=True)
 

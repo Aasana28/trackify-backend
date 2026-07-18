@@ -95,5 +95,15 @@ def start_scheduler():
         id="reminder_checker",
         replace_existing=True,
     )
+
+    # Also check for stale (no-response) applications, once every hour
+    from apps.applications.scheduler import check_and_send_stale_application_alerts
+    _scheduler.add_job(
+        check_and_send_stale_application_alerts,
+        trigger=IntervalTrigger(hours=1),
+        id="stale_application_checker",
+        replace_existing=True,
+    )
+
     _scheduler.start()
     logger.info("[Scheduler] Reminder scheduler started — checking every minute.")
