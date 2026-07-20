@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     # Third-party
     "rest_framework",
     "rest_framework_simplejwt",
+    "anymail",
     "corsheaders",
     "allauth",
     "allauth.account",
@@ -142,13 +143,11 @@ SOCIALACCOUNT_AUTO_SIGNUP     = True
 
 # ─── Email ───────────────────────────────────────────────────────────────────
 # Set EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend in .env for production.
-EMAIL_BACKEND    = config("EMAIL_BACKEND",    default="django.core.mail.backends.console.EmailBackend")
-EMAIL_HOST       = config("EMAIL_HOST",       default="smtp.gmail.com")
-EMAIL_PORT       = config("EMAIL_PORT",       default=587, cast=int)
-EMAIL_USE_TLS    = config("EMAIL_USE_TLS",    default=True,  cast=bool)
-EMAIL_HOST_USER  = config("EMAIL_HOST_USER",  default="")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL  = config("DEFAULT_FROM_EMAIL",  default="Trackify <noreply@trackify.app>")
+EMAIL_BACKEND = config("EMAIL_BACKEND", default="anymail.backends.brevo.EmailBackend")
+ANYMAIL = {
+    "BREVO_API_KEY": config("BREVO_API_KEY", default=""),
+}
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Trackify <noreply@trackify.app>")
 
 FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:3000")
 
