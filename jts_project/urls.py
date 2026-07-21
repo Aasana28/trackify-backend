@@ -8,6 +8,7 @@ from apps.accounts.views import (
     RegisterView, LoginView, GoogleLoginView, UserProfileView,
     ForgotPasswordView, ResetPasswordView, ChangePasswordView,
     UserActivityView, RecordAccessView, HeartbeatView,
+    ChangeEmailView, DeleteAccountView,
 )
 
 urlpatterns = [
@@ -24,6 +25,8 @@ urlpatterns = [
     path("api/auth/forgot-password/", ForgotPasswordView.as_view(), name="forgot_password"),
     path("api/auth/reset-password/",  ResetPasswordView.as_view(),  name="reset_password"),
     path("api/auth/change-password/", ChangePasswordView.as_view(), name="change_password"),
+    path("api/auth/change-email/",    ChangeEmailView.as_view(),    name="change_email"),
+    path("api/auth/delete-account/",  DeleteAccountView.as_view(),  name="delete_account"),
 
     # ─── Activity Tracking ────────────────────────────────────────────────────
     path("api/auth/activity/",        UserActivityView.as_view(),   name="user_activity"),

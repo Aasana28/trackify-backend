@@ -19,6 +19,7 @@ from .serializers import (
     RegisterSerializer, UserSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
     ChangePasswordSerializer, UserActivitySerializer,
+    ChangeEmailSerializer, DeleteAccountSerializer,
 )
 
 User = get_user_model()
@@ -92,6 +93,28 @@ class RegisterView(APIView):
             user   = serializer.save()
             record_login(user)
             tokens = get_tokens_for_user(user)
+
+            name = user.name or user.email
+            try:
+                send_branded_email(
+                    subject="Welcome to Trackify",
+                    to_email=user.email,
+                    heading=f"Welcome, {name}!",
+                    body_lines=[
+                        "Your Trackify account has been created successfully.",
+                        "Start tracking your job applications, set reminders, and stay on top of your job search.",
+                    ],
+                    plain_text=(
+                        f"Welcome, {name}!\n\n"
+                        f"Your Trackify account has been created successfully.\n"
+                        f"Start tracking your job applications, set reminders, and stay on top of your job search.\n\n"
+                        f"— Trackify Team"
+                    ),
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
+
             return Response({
                 "user":    UserSerializer(user).data,
                 "access":  tokens["access"],
@@ -183,6 +206,25 @@ class GoogleLoginView(APIView):
             user.name       = name
             user.avatar_url = avatar_url
             user.save()
+        else:
+            try:
+                send_branded_email(
+                    subject="Welcome to Trackify",
+                    to_email=user.email,
+                    heading=f"Welcome, {name or user.email}!",
+                    body_lines=[
+                        "Your Trackify account has been created successfully.",
+                        "Start tracking your job applications, set reminders, and stay on top of your job search.",
+                    ],
+                    plain_text=(
+                        f"Welcome, {name or user.email}!\n\n"
+                        f"Your Trackify account has been created successfully.\n\n"
+                        f"— Trackify Team"
+                    ),
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
 
         record_login(user)
         tokens = get_tokens_for_user(user)
@@ -421,3 +463,108 @@ class HeartbeatView(APIView):
     def post(self, request):
         record_heartbeat(request.user)
         return Response({"status": "ok"})
+
+
+class ChangeEmailView(APIView):
+    """
+    POST /api/auth/change-email/
+    Body: { new_email, current_password }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangeEmailSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        new_email = serializer.validated_data["new_email"].lower().strip()
+        current_password = serializer.validated_data["current_password"]
+
+        if not request.user.check_password(current_password):
+            return Response(
+                {"error": "Current password is incorrect."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
+            return Response(
+                {"error": "This email is already in use."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        old_email = request.user.email
+        request.user.email    = new_email
+        request.user.username = new_email
+        request.user.save()
+
+        name = request.user.name or new_email
+        try:
+            send_branded_email(
+                subject="Email Address Changed",
+                to_email=old_email,
+                heading=f"Hello {name},",
+                body_lines=[
+                    f"Your Trackify account email was changed to {new_email}.",
+                    "If you did not make this change, please contact support immediately.",
+                ],
+                plain_text=(
+                    f"Hello {name},\n\n"
+                    f"Your Trackify account email was changed to {new_email}.\n"
+                    f"If you did not do this, contact support immediately.\n\n"
+                    f"— Trackify Team"
+                ),
+                fail_silently=True,
+            )
+        except Exception:
+            pass
+
+        return Response({"message": "Email changed successfully.", "email": new_email})
+
+
+class DeleteAccountView(APIView):
+    """
+    POST /api/auth/delete-account/
+    Body: { password }
+    Permanently deletes the logged-in user's account.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = DeleteAccountSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        password = serializer.validated_data.get("password", "")
+
+        if not request.user.has_usable_password():
+            pass
+        elif not request.user.check_password(password):
+            return Response(
+                {"error": "Password is incorrect."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        email = request.user.email
+        name  = request.user.name or email
+
+        try:
+            send_branded_email(
+                subject="Account Deleted",
+                to_email=email,
+                heading=f"Goodbye, {name}",
+                body_lines=[
+                    "Your Trackify account and all associated data have been permanently deleted.",
+                    "We're sorry to see you go. You're welcome back anytime.",
+                ],
+                plain_text=(
+                    f"Goodbye, {name}\n\n"
+                    f"Your Trackify account and all associated data have been permanently deleted.\n\n"
+                    f"— Trackify Team"
+                ),
+                fail_silently=True,
+            )
+        except Exception:
+            pass
+
+        request.user.delete()
+        return Response({"message": "Account deleted successfully."})

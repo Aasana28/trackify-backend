@@ -51,3 +51,12 @@ class ChangePasswordSerializer(serializers.Serializer):
     """For authenticated users changing their password from settings."""
     current_password = serializers.CharField(write_only=True)
     new_password     = serializers.CharField(min_length=6, write_only=True)
+
+
+class ChangeEmailSerializer(serializers.Serializer):
+    new_email = serializers.EmailField()
+    current_password = serializers.CharField(write_only=True)
+
+
+class DeleteAccountSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
