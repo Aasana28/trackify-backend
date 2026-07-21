@@ -93,28 +93,6 @@ class RegisterView(APIView):
             user   = serializer.save()
             record_login(user)
             tokens = get_tokens_for_user(user)
-
-            name = user.name or user.email
-            try:
-                send_branded_email(
-                    subject="Welcome to Trackify",
-                    to_email=user.email,
-                    heading=f"Welcome, {name}!",
-                    body_lines=[
-                        "Your Trackify account has been created successfully.",
-                        "Start tracking your job applications, set reminders, and stay on top of your job search.",
-                    ],
-                    plain_text=(
-                        f"Welcome, {name}!\n\n"
-                        f"Your Trackify account has been created successfully.\n"
-                        f"Start tracking your job applications, set reminders, and stay on top of your job search.\n\n"
-                        f"— Trackify Team"
-                    ),
-                    fail_silently=True,
-                )
-            except Exception:
-                pass
-
             return Response({
                 "user":    UserSerializer(user).data,
                 "access":  tokens["access"],
@@ -206,25 +184,6 @@ class GoogleLoginView(APIView):
             user.name       = name
             user.avatar_url = avatar_url
             user.save()
-        else:
-            try:
-                send_branded_email(
-                    subject="Welcome to Trackify",
-                    to_email=user.email,
-                    heading=f"Welcome, {name or user.email}!",
-                    body_lines=[
-                        "Your Trackify account has been created successfully.",
-                        "Start tracking your job applications, set reminders, and stay on top of your job search.",
-                    ],
-                    plain_text=(
-                        f"Welcome, {name or user.email}!\n\n"
-                        f"Your Trackify account has been created successfully.\n\n"
-                        f"— Trackify Team"
-                    ),
-                    fail_silently=True,
-                )
-            except Exception:
-                pass
 
         record_login(user)
         tokens = get_tokens_for_user(user)
