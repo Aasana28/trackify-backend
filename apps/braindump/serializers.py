@@ -7,5 +7,5 @@ from .models import BrainDump
 class BrainDumpSerializer(serializers.ModelSerializer):
     class Meta:
         model  = BrainDump
-        fields = ["id", "application", "company", "role", "went_well", "struggled", "next_time", "date", "created_at"]
+        fields = ["id", "application", "company", "role", "went_well", "struggled", "next_time", "ai_feedback", "date", "created_at"]
         read_only_fields = ["date", "created_at"]

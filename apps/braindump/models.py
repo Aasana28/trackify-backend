@@ -12,6 +12,7 @@ class BrainDump(models.Model):
     went_well   = models.TextField(blank=True)
     struggled   = models.TextField(blank=True)
     next_time   = models.TextField(blank=True)
+    ai_feedback = models.TextField(blank=True)
     date        = models.DateField(auto_now_add=True)
     created_at  = models.DateTimeField(auto_now_add=True)
 
